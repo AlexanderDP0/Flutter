@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:namer_app/front/utils/android/basescaffold.dart';
 import 'projects_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Pantalla Principal"),
-      ),
+    return BaseScaffold(
+      title: "Pantalla Principal",
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(

@@ -16,32 +16,40 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32.0),
+        padding:
+            EdgeInsets.symmetric(horizontal: 24.0), // Reduce padding horizontal
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize:
+                MainAxisSize.min, // Ajusta la altura de la columna al contenido
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Iniciar sesión',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 16), // Reduce el espacio vertical
               TextField(
                 controller: _userController,
                 decoration: InputDecoration(
                   labelText: 'Usuario',
                   hintText: 'ID',
                   border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 12.0), // Reduce padding interno
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 16), // Reduce el espacio vertical
               TextField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   hintText: 'Contraseña',
                   border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 12.0), // Reduce padding interno
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible
@@ -57,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 obscureText: !_isPasswordVisible,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 12), // Reduce el espacio vertical
               Row(
                 children: [
                   Switch(
@@ -78,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 12), // Reduce el espacio vertical
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -90,7 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    padding: EdgeInsets.symmetric(
+                        vertical: 12.0), // Reduce padding del botón
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),

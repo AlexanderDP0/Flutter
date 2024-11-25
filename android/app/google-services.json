@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "342531321322",
+    "project_id": "metodologias-1b088",
+    "storage_bucket": "metodologias-1b088.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342531321322:android:98cfa22882fa1b640ad693",
+        "android_client_info": {
+          "package_name": "com.stocknet.stocknet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB92ygRIe4hKgX5WS7NxwKxZJWYruIdEz8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

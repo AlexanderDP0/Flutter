@@ -1,4 +1,4 @@
-package com.example.namer_app
+package com.stocknet.stocknet
 
 import io.flutter.embedding.android.FlutterActivity
 
