@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:namer_app/front/pages/pc/alta_user.dart';
 import 'package:namer_app/front/pages/pc/projects_screen.dart';
 import 'package:namer_app/front/pages/pc/projects_list.dart';
+import 'package:namer_app/front/pages/pc/usuarios.dart';
 
 class SideNav extends StatelessWidget {
   const SideNav({Key? key}) : super(key: key);
@@ -24,12 +26,32 @@ class SideNav extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.person),
+            leading: Icon(Icons.work),
             title: Text('Projects'),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ProjectList()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.person_add),
+            title: Text('Altas'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AltaUser()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.person),
+            title: Text('Usuarios'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) =>UserManagementScreen()),
               );
             },
           ),

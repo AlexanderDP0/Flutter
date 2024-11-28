@@ -5,11 +5,17 @@ import 'package:namer_app/front/pages/android/projects_screen.dart';
 import 'front/pages/android/login_screen.dart';
 import 'front/pages/android/home_screen.dart';
 import 'front/pages/pc/projects_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // Archivo generado por Firebase CLI
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // Usa las opciones para cada plataforma
+  );
   runApp(MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -44,7 +50,7 @@ class MyApp extends StatelessWidget {
             case '/home':
               return MaterialPageRoute(builder: (context) => HomeScreen());
             case '/projects':
-              return MaterialPageRoute(builder: (context) => ProjectScreen());
+              return MaterialPageRoute(builder: (context) => ProjectScreen(projectId: '',));
             default:
               return MaterialPageRoute(builder: (context) => LoginScreen());
           }

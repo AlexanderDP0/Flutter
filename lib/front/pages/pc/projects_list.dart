@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Asegúrate de instalar firebase_firestore y configurarlo
 import '../../utils/pc/header.dart';
 import '../../utils/pc/sidenav.dart';
+import 'package:intl/intl.dart'; // Para formatear fechas
+
 
 class ProjectList extends StatelessWidget {
   const ProjectList({Key? key}) : super(key: key);
@@ -31,7 +34,7 @@ class ProjectList extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Projects',
+                                  'Proyectos',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -48,20 +51,37 @@ class ProjectList extends StatelessWidget {
                             ),
                             SizedBox(height: 20),
                             Expanded(
-                              child: GridView.builder(
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: isWideScreen
-                                      ? 3
-                                      : 1, // 3 columns for wide screens
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.5,
-                                ),
-                                itemCount:
-                                    6, // Change based on actual project count
-                                itemBuilder: (context, index) {
-                                  return ProjectCard();
+                              child: StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('proyectos')
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+                                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                    return Center(
+                                      child: Text('No projects found.'),
+                                    );
+                                  }
+                                  final projects = snapshot.data!.docs;
+                                  return GridView.builder(
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: isWideScreen ? 3 : 1,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      childAspectRatio: 1.5,
+                                    ),
+                                    itemCount: projects.length,
+                                    itemBuilder: (context, index) {
+                                      final project = projects[index].data() as Map<String, dynamic>;
+                                      return ProjectCard(project: project);
+                                    },
+                                  );
                                 },
                               ),
                             ),
@@ -81,79 +101,103 @@ class ProjectList extends StatelessWidget {
 }
 
 class ProjectCard extends StatelessWidget {
-  const ProjectCard({Key? key}) : super(key: key);
+  final Map<String, dynamic> project;
+
+  const ProjectCard({Key? key, required this.project}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Adoddle',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Icon(Icons.open_in_new),
-              ],
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit...',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, size: 16, color: Colors.redAccent),
-                SizedBox(width: 5),
-                Text(
-                  '28 APR, 2023',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Profile images placeholder
-                Row(
-                  children: List.generate(
-                    4, // Adjust based on the number of team members
-                    (index) => Padding(
-                      padding: const EdgeInsets.only(right: 4.0),
-                      child: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.blueAccent,
-                        child: Text(
-                          'U', // Use initials or images here
-                          style: TextStyle(fontSize: 12, color: Colors.white),
-                        ),
-                      ),
+    return GestureDetector(
+      onTap: () => _showCommentsModal(context),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    project['nombre'] ?? 'Unnamed Project',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                Text(
-                  '15 tasks',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ],
+                  Icon(Icons.open_in_new),
+                ],
+              ),
+              SizedBox(height: 10),
+              Text(
+                project['descripcion'] ?? 'No description available.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16, color: Colors.redAccent),
+                  SizedBox(width: 5),
+                  Text(
+                    '${project['fechaInicio'] ?? 'No start date'} - ${project['fechaFin'] ?? 'No end date'}',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  void _showCommentsModal(BuildContext context) {
+    final comments = project['comentarios'] as List<dynamic>? ?? [];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Comentarios de ${project['nombre'] ?? 'Project'}'),
+          content: comments.isEmpty
+              ? Text('No comments available.')
+              : SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = comments[index] as Map<String, dynamic>;
+                      final user = comment['usuario'] ?? 'Unknown User';
+                      final text = comment['comentario'] ?? 'No comment';
+                      final timestamp = comment['fecha'] as Timestamp?;
+                      final date = timestamp != null
+                          ? DateFormat('yyyy-MM-dd HH:mm')
+                              .format(timestamp.toDate())
+                          : 'Unknown Date';
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: ListTile(
+                          title: Text(user, style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('$text\n$date'),
+                          isThreeLine: true,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

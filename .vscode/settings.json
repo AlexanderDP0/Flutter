@@ -1,3 +1,4 @@
 {
-  "cmake.sourceDirectory": "D:/FlutterProjects/namer_app/linux"
+  "cmake.sourceDirectory": "D:/FlutterProjects/namer_app/linux",
+  "java.configuration.updateBuildConfiguration": "interactive"
 }
