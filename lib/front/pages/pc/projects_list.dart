@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Asegúrate de instalar firebase_firestore y configurarlo
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/pc/header.dart';
 import '../../utils/pc/sidenav.dart';
 import 'package:intl/intl.dart'; // Para formatear fechas
-
 
 class ProjectList extends StatelessWidget {
   const ProjectList({Key? key}) : super(key: key);
@@ -56,8 +55,7 @@ class ProjectList extends StatelessWidget {
                                     .collection('proyectos')
                                     .snapshots(),
                                 builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
                                     return Center(
                                       child: CircularProgressIndicator(),
                                     );
@@ -79,7 +77,7 @@ class ProjectList extends StatelessWidget {
                                     itemCount: projects.length,
                                     itemBuilder: (context, index) {
                                       final project = projects[index].data() as Map<String, dynamic>;
-                                      return ProjectCard(project: project);
+                                      return ProjectCard(project: project, projectId: projects[index].id);
                                     },
                                   );
                                 },
@@ -102,8 +100,9 @@ class ProjectList extends StatelessWidget {
 
 class ProjectCard extends StatelessWidget {
   final Map<String, dynamic> project;
+  final String projectId;
 
-  const ProjectCard({Key? key, required this.project}) : super(key: key);
+  const ProjectCard({Key? key, required this.project, required this.projectId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +147,30 @@ class ProjectCard extends StatelessWidget {
                   ),
                 ],
               ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  _showAddActivityDialog(context);
+                },
+                child: Text('Agregar Actividades'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              ),
+              SizedBox(height: 10),
+              // Mostrar las actividades existentes en el proyecto
+              project['actividades'] != null && (project['actividades'] as List).isNotEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: (project['actividades'] as List).map((activity) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            activity ?? 'No activity description',
+                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                          ),
+                        );
+                      }).toList(),
+                    )
+                  : Text('No activities yet', style: TextStyle(fontSize: 14, color: Colors.grey)),
             ],
           ),
         ),
@@ -194,6 +217,44 @@ class ProjectCard extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddActivityDialog(BuildContext context) {
+    final activityController = TextEditingController();
+    final firestore = FirebaseFirestore.instance;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Agregar Actividad'),
+          content: TextField(
+            controller: activityController,
+            decoration: InputDecoration(hintText: 'Escribe una nueva actividad'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                String activity = activityController.text.trim();
+                if (activity.isNotEmpty) {
+                  await firestore.collection('proyectos').doc(projectId).update({
+                    'actividades': FieldValue.arrayUnion([activity]),
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Agregar'),
             ),
           ],
         );

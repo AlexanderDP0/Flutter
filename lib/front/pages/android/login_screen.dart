@@ -115,35 +115,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 
- // Función para manejar el inicio de sesión
-  Future<void> _login() async {
-    String email = _userController.text.trim();
-    String password = _passwordController.text.trim();
+Future<void> _login() async {
+  String email = _userController.text.trim();
+  String password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      _showError('Por favor ingresa todos los campos');
-      return;
-    }
-
-    try {
-
-      // Navega a la pantalla principal si la autenticación es exitosa
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } on FirebaseAuthException catch (e) {
-      // Muestra un mensaje de error si la autenticación falla
-      _showError(e.message ?? 'Ocurrió un error inesperado');
-    }
+  if (email.isEmpty || password.isEmpty) {
+    _showError('Por favor ingresa todos los campos');
+    return;
   }
 
-  // Muestra un mensaje de error en un `Snackbar`
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+  try {
+    // Realiza la autenticación con Firebase
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email, password: password);
+
+    // Obtén el UID del usuario autenticado
+    String uid = userCredential.user?.uid ?? '';
+
+    // Navega a la pantalla principal, pasando el UID
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen(userId: uid)),
     );
+  } on FirebaseAuthException catch (e) {
+    // Muestra un mensaje de error si la autenticación falla
+    _showError(e.message ?? 'Ocurrió un error inesperado');
   }
 }
 
-
+void _showError(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message)),
+  );
+}
+}

@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
           // Permite las rutas normales en dispositivos móviles
           switch (settings.name) {
             case '/home':
-              return MaterialPageRoute(builder: (context) => HomeScreen());
+              return MaterialPageRoute(builder: (context) => HomeScreen(userId: '',));
             case '/projects':
               return MaterialPageRoute(builder: (context) => ProjectScreen(projectId: '',));
             default:

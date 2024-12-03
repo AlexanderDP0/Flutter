@@ -56,7 +56,7 @@ class AppSideNav extends StatelessWidget {
     } else {
       // Muestra el menú completo en dispositivos móviles
       return [
-        buildMenuItem(context, Icons.home, 'Inicio', HomeScreen()),
+        buildMenuItem(context, Icons.home, 'Inicio', HomeScreen(userId: '',)),
         buildMenuItem(context, Icons.work, 'Proyectos', ProjectScreen(projectId: '',)),
         buildMenuItem(context, Icons.exit_to_app, 'Salir', LoginScreen()),
       ];
