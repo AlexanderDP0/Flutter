@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:namer_app/front/pages/pc/alta_user.dart';
+import 'package:namer_app/front/pages/pc/comments.dart';
+import 'package:namer_app/front/pages/pc/inventario.dart';
 import 'package:namer_app/front/pages/pc/projects_screen.dart';
 import 'package:namer_app/front/pages/pc/projects_list.dart';
 import 'package:namer_app/front/pages/pc/usuarios.dart';
@@ -51,11 +53,32 @@ class SideNav extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) =>UserManagementScreen()),
+                MaterialPageRoute(builder: (context) => UserManagementScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.comment),
+            title: Text('Comentarios'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CommentsList(projectId: '',)), // Nueva opción para los comentarios
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.inventory_sharp),
+            title: Text('Inventario'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ToolsAndMaterialsScreen()), // Nueva opción para los comentarios
               );
             },
           ),
         ],
+        
       ),
     );
   }

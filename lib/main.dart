@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
             case '/home':
               return MaterialPageRoute(builder: (context) => HomeScreen(userId: '',));
             case '/projects':
-              return MaterialPageRoute(builder: (context) => ProjectScreen(projectId: '',));
+              return MaterialPageRoute(builder: (context) => ProjectScreen(projectId: '', userName: '',));
             default:
               return MaterialPageRoute(builder: (context) => LoginScreen());
           }

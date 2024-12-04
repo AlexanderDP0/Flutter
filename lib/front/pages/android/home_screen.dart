@@ -97,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               MaterialPageRoute(
                                 builder: (context) => ProjectScreen(
                                   projectId: project['id'],
+                                  userName: userName,
                                 ),
                               ),
                             );

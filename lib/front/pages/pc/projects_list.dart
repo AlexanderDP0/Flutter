@@ -98,14 +98,21 @@ class ProjectList extends StatelessWidget {
   }
 }
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends StatefulWidget {
   final Map<String, dynamic> project;
   final String projectId;
 
   const ProjectCard({Key? key, required this.project, required this.projectId}) : super(key: key);
 
   @override
+  _ProjectCardState createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<ProjectCard> {
+  @override
   Widget build(BuildContext context) {
+    double progreso = (widget.project['progreso'] ?? 0.0).toDouble();
+    
     return GestureDetector(
       onTap: () => _showCommentsModal(context),
       child: Card(
@@ -120,18 +127,18 @@ class ProjectCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    project['nombre'] ?? 'Unnamed Project',
+                    widget.project['nombre'] ?? 'Unnamed Project',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(Icons.open_in_new),
+                  Icon(Icons.open_in_full),
                 ],
               ),
               SizedBox(height: 10),
               Text(
-                project['descripcion'] ?? 'No description available.',
+                widget.project['descripcion'] ?? 'No description available.',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
@@ -142,7 +149,7 @@ class ProjectCard extends StatelessWidget {
                   Icon(Icons.calendar_today, size: 16, color: Colors.redAccent),
                   SizedBox(width: 5),
                   Text(
-                    '${project['fechaInicio'] ?? 'No start date'} - ${project['fechaFin'] ?? 'No end date'}',
+                    '${widget.project['fechaInicio'] ?? 'No start date'} - ${widget.project['fechaFin'] ?? 'No end date'}',
                     style: TextStyle(color: Colors.redAccent),
                   ),
                 ],
@@ -150,27 +157,22 @@ class ProjectCard extends StatelessWidget {
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  _showAddActivityDialog(context);
+                  _showActivitiesModal(context);
                 },
-                child: Text('Agregar Actividades'),
+                child: Text('Ver Actividades'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              ),SizedBox(height: 10),
+              // Mostrar progreso en grande
+              Center(
+                child: Text(
+                  '${progreso.toStringAsFixed(1)}%', // Mostrar el progreso como porcentaje
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
               ),
-              SizedBox(height: 10),
-              // Mostrar las actividades existentes en el proyecto
-              project['actividades'] != null && (project['actividades'] as List).isNotEmpty
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: (project['actividades'] as List).map((activity) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Text(
-                            activity ?? 'No activity description',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                          ),
-                        );
-                      }).toList(),
-                    )
-                  : Text('No activities yet', style: TextStyle(fontSize: 14, color: Colors.grey)),
             ],
           ),
         ),
@@ -178,13 +180,14 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
+
   void _showCommentsModal(BuildContext context) {
-    final comments = project['comentarios'] as List<dynamic>? ?? [];
+    final comments = widget.project['comentarios'] as List<dynamic>? ?? [];
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Comentarios de ${project['nombre'] ?? 'Project'}'),
+          title: Text('Comentarios de ${widget.project['nombre'] ?? 'Project'}'),
           content: comments.isEmpty
               ? Text('No comments available.')
               : SizedBox(
@@ -224,7 +227,7 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
-  void _showAddActivityDialog(BuildContext context) {
+  void _showActivitiesModal(BuildContext context) {
     final activityController = TextEditingController();
     final firestore = FirebaseFirestore.instance;
 
@@ -232,10 +235,45 @@ class ProjectCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Agregar Actividad'),
-          content: TextField(
-            controller: activityController,
-            decoration: InputDecoration(hintText: 'Escribe una nueva actividad'),
+          title: Text('Actividades de ${widget.project['nombre'] ?? 'Project'}'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mostrar las actividades existentes en el proyecto
+                if (widget.project['actividades'] != null && (widget.project['actividades'] as List).isNotEmpty)
+                  ...((widget.project['actividades'] as List).map((activity) {
+                    if (activity is String) {
+                    // Si la actividad es una cadena, mostrarla como texto
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        activity,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                    );
+                  } else if (activity is Map<String, dynamic>) {
+                    // Si la actividad es un mapa, acceder al nombre y mostrarlo
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        activity['nombre'] ?? 'Actividad sin nombre',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                    );
+                  }
+                  return SizedBox(); // Si no es ni String ni Map, no hacer nada
+                  }).toList()),
+                // Si no hay actividades, mostrar un mensaje
+                if (widget.project['actividades'] == null || (widget.project['actividades'] as List).isEmpty)
+                  Text('No activities yet', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                // Formulario para agregar nueva actividad
+                TextField(
+                  controller: activityController,
+                  decoration: InputDecoration(hintText: 'Escribe una nueva actividad'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -248,7 +286,7 @@ class ProjectCard extends StatelessWidget {
               onPressed: () async {
                 String activity = activityController.text.trim();
                 if (activity.isNotEmpty) {
-                  await firestore.collection('proyectos').doc(projectId).update({
+                  await firestore.collection('proyectos').doc(widget.projectId).update({
                     'actividades': FieldValue.arrayUnion([activity]),
                   });
                   Navigator.of(context).pop();

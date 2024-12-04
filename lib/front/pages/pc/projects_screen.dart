@@ -21,6 +21,7 @@ class _ProjectScreenPCState extends State<ProjectScreenPC> with SingleTickerProv
 
   Map<String, bool> _selectedUsers = {};
   Map<String, int> _selectedMaterials = {}; // Almacena material ID y cantidad seleccionada
+  Map<String, TextEditingController> _materialControllers = {}; // Para controlar los TextField
   late TabController _tabController;
 
   @override
@@ -39,6 +40,10 @@ class _ProjectScreenPCState extends State<ProjectScreenPC> with SingleTickerProv
     _startDateController.dispose();
     _endDateController.dispose();
     _descriptionController.dispose();
+
+    // Dispose de los controladores de materiales
+    _materialControllers.values.forEach((controller) => controller.dispose());
+
     super.dispose();
   }
 
@@ -56,6 +61,10 @@ class _ProjectScreenPCState extends State<ProjectScreenPC> with SingleTickerProv
     setState(() {
       _selectedMaterials = {
         for (var doc in snapshot.docs) doc.id: 0, // Inicializa cantidad a 0
+      };
+      // Crear un controlador para cada material
+      _materialControllers = {
+        for (var doc in snapshot.docs) doc.id: TextEditingController(),
       };
     });
   }
@@ -75,51 +84,89 @@ class _ProjectScreenPCState extends State<ProjectScreenPC> with SingleTickerProv
   }
 
   void _createProject() async {
-    if (_titleController.text.isEmpty || _typeController.text.isEmpty || _startDateController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, llena todos los campos obligatorios.')),
-      );
-      return;
-    }
-
-    try {
-      await _firestore.collection('proyectos').add({
-        'titulo': _titleController.text,
-        'tipo': _typeController.text,
-        'fechaInicio': _startDateController.text,
-        'fechaFin': _endDateController.text,
-        'descripcion': _descriptionController.text,
-        'usuarios': _selectedUsers.entries
-            .where((entry) => entry.value)
-            .map((entry) => entry.key)
-            .toList(),
-        'materiales': _selectedMaterials.entries
-            .where((entry) => entry.value > 0)
-            .map((entry) => {'id': entry.key, 'cantidad': entry.value})
-            .toList(),
-        'creadoEl': Timestamp.now(),
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Proyecto creado con éxito.')),
-      );
-
-      // Limpia los campos después de guardar
-      _titleController.clear();
-      _typeController.clear();
-      _startDateController.clear();
-      _endDateController.clear();
-      _descriptionController.clear();
-      setState(() {
-        _selectedUsers = {for (var key in _selectedUsers.keys) key: false};
-        _selectedMaterials = {for (var key in _selectedMaterials.keys) key: 0};
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al crear el proyecto: $e')),
-      );
-    }
+  if (_titleController.text.isEmpty || _typeController.text.isEmpty || _startDateController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Por favor, llena todos los campos obligatorios.')));
+    return;
   }
+
+  try {
+    // Crear el proyecto
+    DocumentReference projectRef = await _firestore.collection('proyectos').add({
+      'nombre': _titleController.text,
+      'tipo': _typeController.text,
+      'fechaInicio': _startDateController.text,
+      'fechaFin': _endDateController.text,
+      'descripcion': _descriptionController.text,
+      'usuarios': _selectedUsers.entries
+          .where((entry) => entry.value)
+          .map((entry) => entry.key)
+          .toList(),
+      'materiales': _selectedMaterials.entries
+          .where((entry) => entry.value > 0)
+          .map((entry) => {'id': entry.key, 'cantidad': entry.value})
+          .toList(),
+      'creadoEl': Timestamp.now(),
+    });
+
+    // Actualizar usuarios con el ID del proyecto
+    List<String> selectedUserIds = _selectedUsers.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    for (String userId in selectedUserIds) {
+      await _firestore.collection('users').doc(userId).update({
+        'proyectos': FieldValue.arrayUnion([projectRef.id]),
+      });
+    }
+
+    // Actualizar el stock de materiales en la colección "materiales"
+    for (var entry in _selectedMaterials.entries) {
+      if (entry.value > 0) {
+        var materialRef = _firestore.collection('materiales').doc(entry.key);
+
+        // Obtener el documento del material actual
+        var materialSnapshot = await materialRef.get();
+        if (materialSnapshot.exists) {
+          var currentStock = materialSnapshot['cantidadDisponible'] ?? 0;
+          var newStock = currentStock - entry.value;
+
+          // Actualizar el stock del material
+          if (newStock >= 0) {
+            await materialRef.update({
+              'cantidadDisponible': newStock,
+            });
+          } else {
+            // Si no hay suficiente stock
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No hay suficiente stock para el material: ${materialSnapshot['nombre']}')));
+            return;
+          }
+        }
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Proyecto creado con éxito.')));
+
+    // Limpia los campos después de guardar
+    _titleController.clear();
+    _typeController.clear();
+    _startDateController.clear();
+    _endDateController.clear();
+    _descriptionController.clear();
+    setState(() {
+      _selectedUsers = {for (var key in _selectedUsers.keys) key: false};
+      _selectedMaterials = {for (var key in _selectedMaterials.keys) key: 0};
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al crear el proyecto: $e')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -276,12 +323,17 @@ class _ProjectScreenPCState extends State<ProjectScreenPC> with SingleTickerProv
               trailing: SizedBox(
                 width: 100,
                 child: TextField(
+                  controller: _materialControllers[materialId],
+                  decoration: InputDecoration(
+                    hintText: 'Cantidad',
+                  ),
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Cantidad'),
                   onChanged: (value) {
-                    setState(() {
+                    if (value.isEmpty) {
+                      _selectedMaterials[materialId] = 0;
+                    } else {
                       _selectedMaterials[materialId] = int.tryParse(value) ?? 0;
-                    });
+                    }
                   },
                 ),
               ),

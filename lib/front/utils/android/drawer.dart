@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:namer_app/front/pages/android/home_screen.dart';
 import 'package:namer_app/front/pages/android/login_screen.dart';
 import 'package:namer_app/front/pages/android/projects_screen.dart';
+import 'package:namer_app/front/pages/android/recordatorios.dart';
 import 'package:namer_app/front/pages/pc/projects_screen.dart';
 
 class AppSideNav extends StatelessWidget {
@@ -57,8 +58,10 @@ class AppSideNav extends StatelessWidget {
       // Muestra el menú completo en dispositivos móviles
       return [
         buildMenuItem(context, Icons.home, 'Inicio', HomeScreen(userId: '',)),
-        buildMenuItem(context, Icons.work, 'Proyectos', ProjectScreen(projectId: '',)),
+        buildMenuItem(context, Icons.work, 'Proyectos', HomeScreen(userId: '',)),
         buildMenuItem(context, Icons.exit_to_app, 'Salir', LoginScreen()),
+        buildMenuItem(context, Icons.notifications, 'Recordatorios', RemindersScreen()),
+
       ];
     }
   }
